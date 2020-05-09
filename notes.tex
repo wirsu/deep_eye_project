@@ -1,0 +1,235 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsfonts,amsmath, amssymb, empheq}
+\usepackage[none]{hyphenat}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[nottoc,notlot, notlof]{tocbibind}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage{amsthm}
+\usepackage{comment}
+\usepackage{algorithmic}
+\usepackage[ruled,vlined]{algorithm2e}
+
+\theoremstyle{definition}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{remark}[theorem]{Remark}
+
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyhead[L]{\slshape \MakeUppercase{Eye Movement Event Detection}}
+\fancyhead[R]{\slshape Winston Ronald Su}
+
+\fancyfoot[C]{\thepage}
+
+\parindent 0ex %removes paragraph indents 
+\setlength{\textfloatsep}{1pt plus 1.0pt minus 1.0pt}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\vspace*{1cm}
+\Large{\textbf{University of Auckland}}\\
+\Large{\textbf{Department of Ophthalmology}}\\
+\vspace*{0.5cm}
+\vfill
+\line(1,0){400}\\
+\huge{\textbf{Eye Movement Event Detection}}\\[3mm]
+\Large{\textbf{- - - }}\\[1mm]
+\line(1,0){400}\\
+\vfill
+Winston Ronald Su\\
+\today\\
+
+\end{center}
+\end{titlepage}
+
+\newpage
+\section{Notes}
+\subsection{Do it yourself event detection}
+page. 202 \\
+
+Create velocity plot. 
+Velocity = Delta Distance / Delta Time. 
+Define thresholds e.g. when velocity $>$ 40 saccade else is fixation. 
+
+\subsubsection{Fixation}
+A fixation loosely speaking, is a state of the eye when it is still.
+During fixations, the dots aggregate to form one large blob out of many dots. How closely the raw sample dots are positioned is directly related to the sampling frequency of tracker. How smooth the data is is based on the precision of tracker.\\
+
+Algorithmic fixations are predominately detected by a maximum allowed dispersion or velocity region. In the first case, temporally adjacent samples must be located within a spatially limited region for a minimum duration.\\
+
+In the latter case, fixations are identified as contiguous portions of the gaze data where gaze velocity doesnt not exceed a predefined threshold. When fixations are detected and fixations inferred, fixations are sometimes called \textbf{intersaccadic intervals}. A fixation always ends when the subsequent saccade starts.\\
+
+A fixation can be described by a number of values: the onset, the offset, the position, the duration, and the dispersion. The exact onset of a fixation is frequently obscured by post saccadic oscillation. 
+
+\subsubsection{Saccades}
+Saccades are identified as periods where the eyes 'move rapidly', and are in practice, defined by velocity or acceleration thresholds; everything above the threshold, being a saccade.\\
+
+To get saccade measurements right, algorithms need to complement the velocity threshold with a more exact calculation of the on and offset of the movement. Post saccadic oscillations make it difficult to exactly pinpoint the end of many saccade.\\
+
+In contrast to fixations, saccades are exclusively defined by their movements in the raw data stream. Saccades are measured by their on and offsets, latency, amplitudes, direction, and curvature. Saccades also have a peak velocity, acceleration, and deceleration, all of which the event detection algorithm must calculate. 
+
+\subsubsection{Smooth Pursuit}
+Smooth pursuit is the motion of the eye as it follows a moving object. Are their smooth pursuit events that can be counted and for which we can calculate the average duration and peak velocity?\\
+
+Smooth pursuit is characterised by periods with more or less constant velocities accompanied by much faster 'catch up' saccades. These are employed when the gaze position lags behind the target.\\
+
+Smooth pursuit events tend to start with a saccade that catches up with the movement.Saccades within a smooth pursuit surrounded on both sides are referred to as catch up saccades. The event is considered terminated when followed by a fixation or by a saccade. There is no well defined border between still fixations and slowly moving smooth pursuits.\\
+
+Another type of saccade are back up saccades which are in the oppostive direction to target motion which reposition the eyes on the target when eye position was ahead of the target. 
+
+\subsubsection{Blinks}
+Blinks are defined as the eyelid descending downward to eventually cover the entire eyeball. On its way down, it covers an increasing amount of the pupil. This makes the pupil centre move downward. When the eyelid reopens, a corresponding upward saccade like movement is produced.\\
+
+If the eyelid movement co occurs with a vertical saccade, it is called an eyelid saccade. An eyelid saccade slows down the saccadic eye movement, alters its curvature, and increases its duration. 
+
+\subsubsection{Post saccadic oscillations}
+Post saccadic oscillations (PSOs) have been hypothesized to be measurement errors, rather than real eye movement events. Pre saccadic oscillations tend to be much less common and smaller in amplitude and duration.\\
+
+The PSO is position in between a saccade and the following fixation or smooth pursuit. If we do not want to grant the PSO event status in its own right, the question is do we assign it to the saccade or the following event?
+
+\subsubsection{Square wave jerks, ocular flutter, and other saccadic instrusions}
+
+\subsubsection{Microsaccades} 
+Microsaccades can be dined as involuntary saccades that occur spontaneously during intended fixation. Volition criteria are often combined with an amplitude threshold. Given the microsaccades, intermicrosaccadic intervals can easily be calculated as the periods between microsaccades. Drift is often defined as a slow movement preceding a microsaccade, but no detection mechanisms exist for this miniature smooth movement.\\
+
+Microsaccades and the other two intrafixational eye movements, drift and tenor, are considered important components of the strategy by which the human visual system processes fine spatial details. It is now believed that intrafixational eye movements enable both precise positioning of the stimulus on the retina and the encoding of spatial information into the spatial and temporal domains. 
+
+\subsubsection{Nystagmus}
+
+\subsubsection{Artefacts and Noise Events}
+
+
+
+\subsection{Basic algorithms and their settings}
+Typically these either detect fixations and assume the rest of the data to be fixations or by detecting saccades and assuming the rest of the data to be fixations. The assumption that data consists only of fixations and saccades barely hold true for still images and text stimuli; and is definitely wrong for any data recorded with moving stimuli.
+
+\subsubsection{Dispersion-based fixation detection algorithms}
+The most common type of event detection algorithm. Prime choice for analysing 20-50 Hz data. In short, dispersion algorithms detect only fixations and assign all other events to a common category. They identify fixations by finding data samples that are close enough to one another for a specified minimal period of time. They do not make use of any use of velocity or acceleration information to calculate the precise on or offsets of fixations.\\
+
+The most commonly used and best is the IDT, identification by dispersion threshold algorithm. Commercial versions of this include ASL and SMI. The following pseudo code describes the algorithm.  
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\textbf{Input:} raw data samples, dispersion threshold, duration threshold\\
+\KwResult{Labeled data }
+ initialization\;
+ 
+ \While{There are still data samples}{
+  Initialise window over first samples to cover duration threshold\;
+  While dispersion $\leq$ threshold, add samples to window\;
+  Note a fixation at the centroid of window samples\;
+  Remove window points from samples\;
+ }
+ \caption{Identification by Dispersion Threshold Algorithm}
+\end{algorithm}
+
+Dispersion is defined as $d = [max(x) - min(x)] + [max(y) = min(y)]$. Where $(x,y)$ represent the samples inside the window. The dispersion algorithms combine a temporal window (duration threshold) with a spatial requirement (dispersion threshold).
+
+\subsubsection{Velocity based fixation detection algorithms}
+
+
+
+
+\newpage
+\section{Notation}
+\begin{itemize}
+
+\item $\mathbb{N}$ denotes the set of natural numbers $\lbrace 0, 1, 2, ... \rbrace$.
+\item If $m, n \in \mathbb{N}$ and $m \leq n$ then $[m,n] = \lbrace i \in \mathbb{N}:m \leq i \leq n \rbrace$.
+\item If $X$ is a topological space, $2^X$ denotes the collection of closed subsets of $X$. 
+\item If $X$ is a topological space, $C(X)$ denotes the collection of connected elements of $2^X$.
+\item For a function $f: X \to Y$ we denote the graph of $f$ by
+\[ \Gamma(f) := \lbrace (x,y) : \forall x \in X, y \in f(x) \rbrace \]
+
+\item Suppose that for each $i \in \mathbb{N}$, $X_i$ is a topological space and $f_{i+1}: X_{i+1} \to 2^{X_i}$ is a function. If $X = \prod _{i \in \mathbb{N}} X_i$ or $X = \prod _{i \in [m,n]} X_i$ for some $m, n \in \mathbb{N}$, then $\pi_j$ denotes the projection of $X$ to $X_j$. That is, if $x$ is in $X$ and $x_j$ is the $j$th coordinate of $x$, then $\pi_j(x) = x_j$
+
+\item Suppose that for each $i \in \mathbb{N}$, $X_i$ is a topological space and $f_{i+1}: X_{i+1} \to 2^{X_i}$ is a function. If $X = \prod _{i \in \mathbb{N}} X_i$ or $X = \prod _{i \in [m,n]} X_i$ for some $m, n \in\mathbb{N}$ and $A \subset \mathbb{N}$. Let $A = \lbrace i_0, i_1, ... \rbrace$. $A$ can be finite or infinite and we do not assume that the members of $A$ are written in increasing order. Then $\pi_A$ denotes the projection of $X$ to  $\prod _{i \in A} X_i$. That is, if $x$ is in $X$, then $\pi_A(x) = (x_{i_{0}}, x_{i_{1}}, ... )$. If $A$ has only two members, say $A$ = $\lbrace j , k \rbrace$, we simply write $\pi_{j, k}$.
+
+\item If $f$ is an upper semicontinuous function $f: X \to 2^Y$, let $f^{-1}$ denote the upper semicontinuous function from $Y$ into $2^X$ defined by the property that $x \in f^{-1}(y)$ if and only if $y \in f(x)$.
+
+
+\end{itemize}
+\newpage
+
+\section{Scribble}
+
+Bullet points:
+\begin{itemize}
+
+\item one.
+
+\item two. 
+
+\item three.
+
+\end{itemize}
+
+Numbered Lists! 
+\begin{enumerate}
+  \item The labels consists of sequential numbers.
+  \item The numbers starts at 1 with every call to the enumerate environment.
+\end{enumerate}
+
+\begin{enumerate}
+   \item First level item
+   \item First level item
+   \begin{enumerate}
+     \item Second level item
+     \begin{enumerate}
+       \item Third level item
+       \begin{enumerate}
+         \item Fourth level item
+       \end{enumerate}
+     \end{enumerate}
+   \end{enumerate}
+ \end{enumerate}
+
+
+\begin{align*}
+f \colon A &\to B \\
+x &\mapsto f(x)
+\end{align*}
+
+Inverse limit notation: $\varprojlim f$
+
+Latex Stars : $\star $ and $\bigstar_{[1,n]}$
+
+Cross product: $\times$
+
+Intersections and unions: $\cup \text{ and } \cap $
+
+Product: $\prod_{i \in X}$
+
+Subset / proper subset $\subset$ and $\supset$ and $\subseteq$ and $\supseteq$
+
+Over line: $\overline{xxx}$ and $\underline{xx}$
+
+Natural numbers: $i \in \mathbb{N} $
+
+Angled brackets: $\langle$ and $\rangle$
+
+Curly brackets: $\lbrace$ and $\rbrace$
+
+Gamma: $\Gamma$ and $\Gamma(f)$
+
+Function with Domain $X$ to Codomain $Y$. $f: X \to Y$ and $x \mapsto x^2$
+
+Function $f_{i+1}: X_{i+1} \to 2^{X_i}$ and $x \mapsto x^2$
+
+Pi symbol: $\pi$
+
+Subset symbol: $\Subset$
+
+\end{document}
