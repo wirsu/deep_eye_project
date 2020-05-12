@@ -138,6 +138,47 @@ The most commonly used and best is the IDT, identification by dispersion thresho
 Dispersion is defined as $d = [max(x) - min(x)] + [max(y) = min(y)]$. Where $(x,y)$ represent the samples inside the window. The dispersion algorithms combine a temporal window (duration threshold) with a spatial requirement (dispersion threshold).
 
 \subsubsection{Velocity based fixation detection algorithms}
+Similar to dispersion algorithms, fixation velocity algorithms use a duration criterion, but combine it with a stillness criterion based on the eye velocity. Users of this algorithm must decide an upper velocity threshold for fixations.Thresholds could also vary since the velocity samples have undergone different types of lowpass filtering prior to detection; little filtering requires higher thresholds. \\
+
+This algorithm also requires an additional minimum duration threshold for fixations. The algorithm thus finds fixations as periods longer than a minimum duration which the eye velocity is below a maximum velocity threshold.\\
+
+Example: The complete fixation detection is performed in seven steps: gap fill-in, eye selection, noise reduction, velocity calculator, I-VT classifier, merging of adjacent fixations, and discarding of short fixations.Each step has a specific function and requires mandatory parameters to be set. 
+\begin{itemize}
+\item \textbf{gap fill-in} function is to fill in clean data where gaps in the data exist due to data loss, up to a duration of 75ms. 
+
+\item \textbf{eye selection} setting allows the researcher to choose which of the right and left eyes to use for fixation detection, or to use averages. 
+
+\item \textbf{noise reduction} is a simple form of a lowpass filter that aims to smooth out the noise while still preserving features.
+
+\item \textbf{velocity calculator} assigns angular velocities to each of the gaze data points calculated as an average of the velocity for a period of time around every sample. And window length specifies the length of the averaging window.
+
+\item \textbf{I-VT fixation filter} has assigned every sample to being part of a fixation or a saccade, two optional post processing steps are available. The \textit{merge adjacent fixations} function merges fixations that have been incorrectly split into multiple fixations. With two parameters: max time between fixations, max angle between fixations. 
+
+\item \textbf{discard short fixations} function remvoes incorrectly classified fixations that are too short to be real fixations. 
+\end{itemize}
+
+\subsubsection{Velocity based saccade detection algorithm}
+A velocity based saccade detection algorithm focuses on identifying the saccade velocity peaks. The SMI velocity algorithm is a two pass algorithm. The first pass is to calculate velocities and detect saccades and the second pass is used to find saccade onsets and offsets. Which are used to calculate durations, amplitudes, curvature, etc. Pseudo Code:
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\textbf{Input:} raw data samples, dispersion threshold, duration threshold\\
+\KwResult{Labeled data }
+ \For{All samples: }{
+	Calculate angular velocities\; 
+	Detect peaks in eye velocity\;
+	Calculate fixation velocity threshold\;
+} 
+\For{All velocity peaks: }{
+	Collect all data samples to the left of the peak, but only until the velocity is so slow that the sample must be part of a fixation (the fixation velocity threshold).\;
+	Collect all the data sample to the right of the peak, but only until the velocity is so slow that the sample must be part of a fixation.\;
+	Detect a saccade from the collected data samples only if the velocity peak of the saccade is located within the central part of the saccade. Otherwise it is discarded.\;
+	Detect blinks as periods where the RMS of pupil size exceeds a threshold.\;
+	Fixations are everything that are not saccades or blinks. 
+} 
+ \caption{SMI Velocity Algorithm}
+\end{algorithm}
+
 
 
 
