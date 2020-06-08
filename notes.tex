@@ -53,6 +53,24 @@ Winston Ronald Su\\
 
 \end{center}
 \end{titlepage}
+\newpage
+\section{To do}
+
+Page 225 – velocity-based fixation detectino algorithms\\
+407 and 604 – smooth pursuit gain\\
+606 – saccadic gain ?on target\\
+614 – model\\
+
+\subsection{Summary of event measures:}
+\begin{itemize}
+\item Velocity and acceleration values
+\item Fixation events:  microsaccades, drifts, intermicrosaccadic intervals
+\item Saccade events: starting position, landing position (under- or over-shoot), amplitude, starting time, duration, peak, velocity, peak acceleration
+\item Smooth pursuit events:  catch up saccade, back up saccade, leading saccade
+\item Blink events
+\item Pupillary Data -constriction veloctiy 
+\end{itemize}
+
 
 \newpage
 \section{Notes}
@@ -179,44 +197,169 @@ A velocity based saccade detection algorithm focuses on identifying the saccade 
  \caption{SMI Velocity Algorithm}
 \end{algorithm}
 
+The algorithm finds the velocity peaks that rise above the threshold, and accepts these as saccade candidates. Originating at the saccade peak, the algorithm walks down the slopes on both sides. The calculated fixation velocity threshold tells the algorithm when the speed is so low (eye is so still) as to stop counting this as a saccade,but rather as a fixation. The SMI implementation of this algorithm assumes that the saccade on and offsets are when the saccade velocity is three standard deviations higher than the average velocity of fixations.\\
+
+Hidden Markov Models (HMM) use a probabilistic model to classify data samples into saccades and fixations based on velocity information. The I-HMM model uses two states, $S_1$ and $S_2$, each representing the velocity distribution of either fixation samples or saccade samples. Each state is associated with transition probabilities of the current sample. Typically, consecutive samples have a high probability of belonging to the same type of eye movement. Besides the transition probabilities, the model needs to know the observation probabilities in the form of velocity distributions.\\
+
+Given the model parameters and a sequence of gaze positions to be classified, dynamic programming such as Viterbi algorithm can be used to map gaze positions to states (fixation or saccade) in a way that maximises the probability of a correct assignment according to the model. Finally, neighbouring saccades and fixations are collapsed.
+
+\subsubsection{Velocity in combination with acceleration}
+Information about eye acceleration can be particularly useful when distinguishing saccades from smooth pursuit. Velocity by itself is not sufficient since the slowest saccade velocity can be slower than the fastest smooth pursuit movement. Acceleration is used in high speed data for detecting saccade on and offsets where the eye acceleration reaches its maximum value.\\
+
+In the Eyelink algorithm, saccade on and off sets are detected by comparing the instantaneous velocity and acceleration against the Eyelink defaults (user defined thresholds). To make the algorithm more robust, detection is triggered when either velocity or acceleration become higher/lower than their respective thresholds for a predefined number of samples. Besides saccades, the Eyelink parser detects blinks and fixations; blinks are identified when the pupil size is very small, or cannot be found at all in the camera image of the eye. Fixations are everything that is not a saccade or a blink.
+
+\newpage
+\subsection{Smooth Pursuit Paradigms (Page 407)}
+Smooth pursuit paradigms are based on testing the participants ability to track moving targets. This engages the participants smooth pursuit system which is not identical to the system for generating saccadic movements.\\
+
+Example, when the motion of the target starts, the eye does not immediately start to follow it. There is an open-loop pursuit initiation phase where there is a little continuous feedback to the tracking system, and the eye executes a direct command to go to the new position, typically triggering a catch-up saccade. Then comes the pursuit maintenance phase, the closed loop, where the tracking system continuously generates target position predictions and tries to match the eye velocity to the target velocity. The tracking accuracy is continually monitored using the retinal information, and primarily adjusted using changes in eye velocity. If the retinal error is too large, the saccade system steps in to program a catch up saccade. The predictive nature of the smooth pursuit system is evident when the moving target suddenly disappears, but the smooth pursuit system still generates smooth movements. The smooth pursuit process is, however, not isolated from cognition. Smooth pursuit is influenced by extraretinal processes such as anticipation, attention, and working memory. \\
+
+Stimuli in smooth pursuit contain a moving target, but may differ in movement initiation, velocity, direction changes etc. 
+
+\begin{itemize}
+\item continous
+\item sinusodial tracking test
+\item triangle wave task
+\item ramp task 
+\item blanking task
+\end{itemize}
+
+The terms \textbf{foveofugal} and \textbf{foveopetal} are sometimes used as a way of indicating the direction of the initial motion relative to the fovea of the viewing eye. \\
+
+Some examples: flash pursuit paradigm, predictive smooth pursuit paradigm, occluded onset pursuit paradigm. 
+\subsubsection{Measures}
+For describing the pursuit onset, \textbf{pursuit onset latency} and \textbf{eye velocity} are of interest. A way of overcoming noise, from differentiation and other sources, is to fit two straight lines.\\
+
+One as the horizontal line indicating the velocity of the stationary eye, and one steeper line indicating the velocity of the eye in pursuit. This is calculated after having removed saccades from the data. The point where the two lines cross is the point of pursuit onset, and the slope of the second line gives the velocity.\\
+
+Smooth pursuit movement that reliably follows the target but consistently lag behind, can be described by a phase lag for a sinusoidal stimuli. The most common measure for research on smooth pursuit is the gain. This measures the ability of a pursuit system to minimize the retinal error by adjusting the pursuit velocity to match that of the target. Which is the \textbf{ratio of the eye velocity and the target velocity.} 
 
 
 
 
 \newpage
+\subsection{Distances (Page 604)}
+\subsubsection{Eyelid closure degree}
+\textbf{Target Question:} What is the distance between the upper and lower eyelid?\\
+\textbf{Input representation:} Videos of the eyes\\
+\textbf{Output:} Proportion distance between eyelids \\
+
+The eyelid closure degree (ECD) refers to distance between upper and lower eyelid as a proportion of the max distance. ECD 0\% refers to eyes completely open. ECD 100\% refers to completely closed. ECD is similar to blink amplitude but can be calculated continuously. Where as amplitude is calculated for the whole event. 
+
+\subsubsection{Smooth Pursuit Gain}
+\textbf{Target Question:} What is the velocity ratio between the point of gaze and target.\\
+\textbf{Input representation:} Gaze and target positions / velocity\\
+\textbf{Output:} Gain \\
+
+Closed loop smooth pursuit gain is almost always defined as the ratio of eye velocity to target velocity after the first 100ms. So a value of of 1.0 indicates a perfect match, while lower values means that the eye falls behind and an increasing number of saccades are needed to compensate for the slowness of the smooth pursuit system. Gain values are typically slightly less than 1 and tend to fall off as target velocities increase.\\
+
+When using \textbf{sine wave stimuli}, smooth pursuit gain is measured only at peak eye velocity. \textbf{Peak gain} is then defined as the ratio of peak eye velocity to target velocity. A third operational definition of smooth pursuit gain is the rate of catch up saccades. Or the sum of the amplitudes of the catch up saccades.\\
+
+The root mean square (rms) error quantifies gain as the cumulative distance between the eye and the target during smooth pursuit. Assume that at each recorded data sample $n$, $\theta_n$ is a  measure of the distance between the position of gaze and the position of the the target. Then RMS eror is defined as:
+
+\[\theta_{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}\theta_i^2}  = 
+ \sqrt{\frac{\theta_1^2 + \theta_2^2 + \cdots + \theta_n^2}{n}} \]
+
+RMS values are atypical in schizophrenia patients. RMS values also correlate strongly with both older subjective quality ratings of pursuit, and with smooth pursuit gain.\\ 
+
+These different operationalizations make it difficult to conduct comparisions across studies. The comparability of smooth pursuit gain values is jeopardized by differences in the movement pattern of the target, the movement velocity, the number of cycles, and the way the artefacts are removed from the smooth pursuit data.\\
+
+The following influences on smooth pursuit gain have been investigated:
+
+\begin{itemize}
+\item \textbf{Inattention and distraction:} Conditions designed to distract attention, or to produce declining arousal and attention, have been found to lead to reduced smooth pursuit gain
+
+\item \textbf{Motion Direction:} For predictable target motions, most participants have exhibited higher gain balues during horizontal than during vertical smooth pursuit movements.
+
+\item \textbf{Age:} Smooth pursuit gain is on average 0.7 - 0.8 for 8 - 19 year olds, and has been found to increase significantly with age.
+
+\item \textbf{Schizophrenia:} A large number of studies have found that participants with schizophrenia have a poorer than normal smooth pursuit gain.
+
+\item \textbf{Other disorders:} Disturbances in smooth pursuit gain are found in ALS. Decreased smooth pursuit gain in people with affective disorder.
+
+\item \textbf{Nicotine:} Nicotine intake appears to help the smooth pursuit system of schizophrenic patients: in one study, smooth pursuit gain increased and the number of catch up saccades decreased significantly directly after smoking.
+
+\item \textbf{Alcohol:} Smooth pursuit eye movements are significantly distrubed by increasing blood alcohol level. Even if the participant reported not feeling sedated.
+
+\item \textbf{Bariburates and benzodiazepines:} Smooth pursuit gain decreases and the number of catch up saccades increases with increasing doses of the drug.
+
+\item \textbf{Tiredness:} Found poorer smooth pursuit gain with increased sleep deprivation.
+
+\end{itemize}
+
+\subsubsection{Smooth Pursuit Phase}
+\textbf{Target Question:} How far behind or ahead is the eye?\\
+\textbf{Input representation:} Raw data samples and synchronized movement data for the stimulus.\\
+\textbf{Output:} Phase (ms or degrees) \\
+
+When presenting participants with sinusoidal stimulus points, smooth pursuit performance is often evaluated with phase in addition to gain. Phase is a 'measure of the temporal synchrony between the target and the eye.' It can be defined either in terms of a spatial (angular) shift, which measures the difference in phase between the target and eye traces, or in temporal lag which reflects the amount of time the eye is lagging behind the target.\\
+
+Phase shift and lag are often used interchangeably, and terminology and operational definitions vary across publications. Phase has been an important and measure of tracking accuracy when studying the visual processes involved in smooth pursuit. In short, phase shift has been reported to stay below $5^\circ$, but to increase with increasing frequencies. With predictable stimuli, phase shift may disappear, although gain remains smaller than one.
+
+\subsubsection{Saccadic Gain}
+\textbf{Target Question:} What is the distance between saccadic ending point and target?\\
+\textbf{Input representation:} Saccadic landing position and target position.\\
+\textbf{Output:} Gain, as a percentage, Euclidean distance, or angular distance. \\
+
+Saccadic gain which is also called 'saccadic accuracy', is mostly defined as the initial saccade amplitude divided by the target amplitude. 
+
+
+
+
+
+\subsubsection{VOR Gain}
+\textbf{Target Question:} How far behind is the eye in relation to the head?\\
+\textbf{Input representation:} Saccadic landing position and target position.\\
+\textbf{Output:} Gain, as a percentage, Euclidean distance, or angular distance. \\
+
+
+
+
+\subsubsection{OKN Gain}
+\textbf{Target Question:} How far behind is the eye in relation to the head?\\
+\textbf{Input representation:} Saccadic landing position and target position.\\
+\textbf{Output:} Gain \\
+
+
+
+
+\newpage
+\subsection{Model (Page 61)}
+\subsubsection{Measure Concepts and operationalizing them}
+Differentiating between the measure concept, the way the concept is operationalized, and the resulting measurement values is of great importance to understanding why we have the measures we have. The measure concept consists of the idea and name which are known in the literature and theories.
+
+\subsubsection{Proposed model of eye tracking measures}
+By definition, every eye tracking measure presumes that a recording has taken place that produces the raw data samples. Only a few measures have values that equal a value in the raw data steam such as the x coordinate or pupil diameter.\\
+
+A measure such as saccade amplitude uses values from the events and representations, not from the raw data. Quantification of this measure requires small calculations, which we call the operational definition of the measure. If you work with a particular operational definition you should report your measurement values according to that operational definition. There are two of them for saccade amplitude, because this measure can be calculated in two different ways. These measure calculations are generally are generally much smaller than the algorithms that transform data into events and representations.\\
+
+For saccade amplitude we can calculate by multiplication of duration by average velocity, and the other by euclidean distance calculation between the start and end point of the saccade.\\
+
+In the scan path comparison measures, there are three levels of transformations before the measure can be calculated. We first have occulometer event detection, then dwell and transition detection, followed by scan path simulation. Then we go on to do measure calculation.
+
+\begin{itemize}
+\item An eye tracking measure consists of a concept and one or more operational definitions of this concept. Both exist without data. The operational definitions implemented with algorithms take data and refine them according to their criteria. 
+
+\item The measure concept is expressed in words such as 'saccade amplitude' during the development of the experimental design for a study, and may have many conceptual tries to theories and previous studies.
+
+\item The value produced is called the 'measurement', and it is a product of the operational definition measure.
+
+\item In general, eye tracking measures are not taken to operationalize interest, fatigue, degree of dyslexia, or anything else. Operationalizations in this psychometric sense are taken care of by the experimental design are therefore specific to each experiment and must be founded on previous results in which the same interpretation of the measure was made. In contrast, eye tracking measures are operationalized by precise mathematical calculations
+\end{itemize}
+
+\subsubsection{Measures that include a pair or group comparison}
+When comparing the fixation durations between two groups of data files we first calculate the fixation durations for each data file in either group. Suppose that you were to comapre the ditribution of position values in the two data files. Here you may take the two fundamental position coordinates (x,y) from all fixations in each group, and generate two gaze density maps. 
+
+\newpage
 \section{Notation}
 \begin{itemize}
-
-\item $\mathbb{N}$ denotes the set of natural numbers $\lbrace 0, 1, 2, ... \rbrace$.
-\item If $m, n \in \mathbb{N}$ and $m \leq n$ then $[m,n] = \lbrace i \in \mathbb{N}:m \leq i \leq n \rbrace$.
-\item If $X$ is a topological space, $2^X$ denotes the collection of closed subsets of $X$. 
-\item If $X$ is a topological space, $C(X)$ denotes the collection of connected elements of $2^X$.
 \item For a function $f: X \to Y$ we denote the graph of $f$ by
 \[ \Gamma(f) := \lbrace (x,y) : \forall x \in X, y \in f(x) \rbrace \]
 
 \item Suppose that for each $i \in \mathbb{N}$, $X_i$ is a topological space and $f_{i+1}: X_{i+1} \to 2^{X_i}$ is a function. If $X = \prod _{i \in \mathbb{N}} X_i$ or $X = \prod _{i \in [m,n]} X_i$ for some $m, n \in \mathbb{N}$, then $\pi_j$ denotes the projection of $X$ to $X_j$. That is, if $x$ is in $X$ and $x_j$ is the $j$th coordinate of $x$, then $\pi_j(x) = x_j$
 
-\item Suppose that for each $i \in \mathbb{N}$, $X_i$ is a topological space and $f_{i+1}: X_{i+1} \to 2^{X_i}$ is a function. If $X = \prod _{i \in \mathbb{N}} X_i$ or $X = \prod _{i \in [m,n]} X_i$ for some $m, n \in\mathbb{N}$ and $A \subset \mathbb{N}$. Let $A = \lbrace i_0, i_1, ... \rbrace$. $A$ can be finite or infinite and we do not assume that the members of $A$ are written in increasing order. Then $\pi_A$ denotes the projection of $X$ to  $\prod _{i \in A} X_i$. That is, if $x$ is in $X$, then $\pi_A(x) = (x_{i_{0}}, x_{i_{1}}, ... )$. If $A$ has only two members, say $A$ = $\lbrace j , k \rbrace$, we simply write $\pi_{j, k}$.
-
-\item If $f$ is an upper semicontinuous function $f: X \to 2^Y$, let $f^{-1}$ denote the upper semicontinuous function from $Y$ into $2^X$ defined by the property that $x \in f^{-1}(y)$ if and only if $y \in f(x)$.
-
-
 \end{itemize}
-\newpage
-
 \section{Scribble}
-
-Bullet points:
-\begin{itemize}
-
-\item one.
-
-\item two. 
-
-\item three.
-
-\end{itemize}
-
 Numbered Lists! 
 \begin{enumerate}
   \item The labels consists of sequential numbers.
@@ -243,7 +386,6 @@ f \colon A &\to B \\
 x &\mapsto f(x)
 \end{align*}
 
-Inverse limit notation: $\varprojlim f$
 
 Latex Stars : $\star $ and $\bigstar_{[1,n]}$
 
@@ -263,14 +405,11 @@ Angled brackets: $\langle$ and $\rangle$
 
 Curly brackets: $\lbrace$ and $\rbrace$
 
-Gamma: $\Gamma$ and $\Gamma(f)$
-
 Function with Domain $X$ to Codomain $Y$. $f: X \to Y$ and $x \mapsto x^2$
 
 Function $f_{i+1}: X_{i+1} \to 2^{X_i}$ and $x \mapsto x^2$
 
 Pi symbol: $\pi$
 
-Subset symbol: $\Subset$
 
 \end{document}
